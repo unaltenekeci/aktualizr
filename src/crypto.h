@@ -9,6 +9,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
+#include <openssl/bio.h>
 #include <sodium.h>
 #include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string.hpp>
@@ -22,7 +23,10 @@
 // some older versions of openssl have BIO_new_mem_buf defined with fisrt parameter of type (void*)
 //   which is not true and breaks our build
 #undef BIO_new_mem_buf
+
+extern "C" {
 BIO *BIO_new_mem_buf(const void *, int);
+}
 
 struct PublicKey {
   enum Type { RSA = 0, ED25519 };
