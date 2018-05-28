@@ -18,14 +18,18 @@
 
 SotaUptaneClient::SotaUptaneClient(Config &config_in, std::shared_ptr<event::Channel> events_channel_in,
                                    Uptane::Repository &repo, std::shared_ptr<INvStorage> storage_in,
-                                   HttpInterface &http_client)
+                                   HttpInterface &http_client, const Bootloader& bootloader_in)
     : config(config_in),
       events_channel(std::move(std::move(events_channel_in))),
       uptane_repo(repo),
       storage(std::move(storage_in)),
       http(http_client),
+      bootloader(bootloader_in),
       last_targets_version(-1) {
+  // consider boot successful as soon as we started, missing internet connection or connection to secondaries are not proper reasons to roll back
   pacman = PackageManagerFactory::makePackageManager(config.pacman, storage);
+  if (pacman->imageUpdated())
+    bootloader.setBootOK();
 
   if (config.discovery.ipuptane) {
     IpSecondaryDiscovery ip_uptane_discovery{config.network};
@@ -248,6 +252,8 @@ void SotaUptaneClient::runForever(const std::shared_ptr<command::Channel> &comma
           for (it = primary_updates.begin(); it != primary_updates.end(); ++it) {
             if (!isInstalled(*it)) {
               PackageInstallSetResult(*it);
+	      // installation was successful => notify the bootloader
+	      bootloader.updateNotify();
             } else {
               data::InstallOutcome outcome(data::ALREADY_PROCESSED, "Package already installed");
               operation_result["operation_result"] =

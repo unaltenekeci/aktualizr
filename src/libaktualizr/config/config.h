@@ -14,6 +14,7 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "asn1/asn1-cerstream.h"
+#include "bootloader/bootloader.h"
 #include "crypto/keymanager.h"
 #include "crypto/p11engine.h"
 #include "logging/logging.h"
@@ -131,6 +132,7 @@ class Config : public BaseConfig {
   StorageConfig storage;
   ImportConfig import;
   TelemetryConfig telemetry;
+  BootloaderConfig bootloader;
 
  private:
   void updateFromPropertyTree(const boost::property_tree::ptree& pt) override;
