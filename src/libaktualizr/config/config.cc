@@ -137,18 +137,18 @@ std::ostream& operator<<(std::ostream& os, const Config& cfg) {
 
 Config::Config() { postUpdateValues(); }
 
-Config::Config(const boost::filesystem::path& filename) {
+Config::Config(const boost::filesystem::path& filename, const boost::filesystem::path& prefix) {
   updateFromToml(filename);
-  postUpdateValues();
+  postUpdateValues(prefix);
 }
 
-Config::Config(const std::vector<boost::filesystem::path>& config_dirs) {
+Config::Config(const std::vector<boost::filesystem::path>& config_dirs, const boost::filesystem::path& prefix) {
   checkDirs(config_dirs);
   updateFromDirs(config_dirs);
-  postUpdateValues();
+  postUpdateValues(prefix);
 }
 
-Config::Config(const boost::program_options::variables_map& cmd) {
+Config::Config(const boost::program_options::variables_map& cmd, const boost::filesystem::path& prefix) {
   // Redundantly check and set the loglevel from the commandline prematurely so
   // that it is taken account while processing the config.
   if (cmd.count("loglevel") != 0) {
@@ -165,14 +165,14 @@ Config::Config(const boost::program_options::variables_map& cmd) {
     updateFromDirs(config_dirs_);
   }
   updateFromCommandLine(cmd);
-  postUpdateValues();
+  postUpdateValues(prefix);
 }
 
 KeyManagerConfig Config::keymanagerConfig() const {
   return KeyManagerConfig{p11, tls.ca_source, tls.pkey_source, tls.cert_source, uptane.key_type, uptane.key_source};
 }
 
-void Config::postUpdateValues() {
+void Config::postUpdateValues(const boost::filesystem::path& prefix) {
   logger_set_threshold(logger);
 
   if (provision.provision_path.empty()) {
@@ -181,7 +181,7 @@ void Config::postUpdateValues() {
 
   if (tls.server.empty()) {
     if (!tls.server_url_path.empty()) {
-      tls.server = Utils::readFile(tls.server_url_path);
+      tls.server = Utils::readFile(prefix / tls.server_url_path);
     } else if (!provision.provision_path.empty()) {
       if (boost::filesystem::exists(provision.provision_path)) {
         tls.server = Bootstrap::readServerUrl(provision.provision_path);

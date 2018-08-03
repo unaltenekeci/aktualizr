@@ -104,14 +104,14 @@ struct DiscoveryConfig {
 class Config : public BaseConfig {
  public:
   Config();
-  explicit Config(const boost::program_options::variables_map& cmd);
-  explicit Config(const boost::filesystem::path& filename);
-  explicit Config(const std::vector<boost::filesystem::path>& config_dirs);
+  explicit Config(const boost::program_options::variables_map& cmd, const boost::filesystem::path& prefix = "/");
+  explicit Config(const boost::filesystem::path& filename, const boost::filesystem::path& prefix = "/");
+  explicit Config(const std::vector<boost::filesystem::path>& config_dirs, const boost::filesystem::path& prefix = "/");
 
   KeyManagerConfig keymanagerConfig() const;
 
   void updateFromTomlString(const std::string& contents);
-  void postUpdateValues();
+  void postUpdateValues(const boost::filesystem::path& prefix = "/");
   void writeToStream(std::ostream& sink) const;
 
   // Config data structures. Keep logger first so that it is taken into account

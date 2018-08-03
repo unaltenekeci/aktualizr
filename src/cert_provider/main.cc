@@ -389,34 +389,41 @@ int main(int argc, char* argv[]) {
   boost::filesystem::path cert_file = "client.pem";
   boost::filesystem::path ca_file = "root.crt";
   boost::filesystem::path url_file = "gateway.url";
+
   if (!config_path.empty()) {
-    Config config(config_path);
+    std::unique_ptr<Config> config;
+    // if the config is just one file, use single-file constructor
+    if (config_path.size() == 1 && boost::filesystem::is_regular_file(config_path[0])) {
+      config = std_::make_unique<Config>(config_path[0], local_dir);
+    } else {
+      config = std_::make_unique<Config>(config_path, local_dir);
+    }
     // TODO: provide path to root directory in `--local` parameter
 
-    if (!config.storage.path.empty()) {
-      directory = config.storage.path;
+    if (!config->storage.path.empty()) {
+      directory = config->storage.path;
     }
 
-    if (!config.import.tls_pkey_path.empty()) {
-      pkey_file = config.import.tls_pkey_path;
+    if (!config->import.tls_pkey_path.empty()) {
+      pkey_file = config->import.tls_pkey_path;
     } else {
-      pkey_file = config.storage.tls_pkey_path;
+      pkey_file = config->storage.tls_pkey_path;
     }
 
-    if (!config.import.tls_clientcert_path.empty()) {
-      cert_file = config.import.tls_clientcert_path;
+    if (!config->import.tls_clientcert_path.empty()) {
+      cert_file = config->import.tls_clientcert_path;
     } else {
-      cert_file = config.storage.tls_clientcert_path;
+      cert_file = config->storage.tls_clientcert_path;
     }
     if (provide_ca) {
-      if (!config.import.tls_cacert_path.empty()) {
-        ca_file = config.import.tls_cacert_path;
+      if (!config->import.tls_cacert_path.empty()) {
+        ca_file = config->import.tls_cacert_path;
       } else {
-        ca_file = config.storage.tls_cacert_path;
+        ca_file = config->storage.tls_cacert_path;
       }
     }
     if (provide_url) {
-      url_file = config.tls.server_url_path;
+      url_file = config->tls.server_url_path;
     }
   }
 
