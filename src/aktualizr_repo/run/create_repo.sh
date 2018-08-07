@@ -19,11 +19,17 @@ distinguished_name = req_distinguished_name
 basicConstraints = critical,CA:true
 keyUsage = keyCertSign
 EOF
+        # CA certificate for client devices
         openssl genrsa -out ${certs_dir}/client/ca.private.pem 4096
         openssl req -key ${certs_dir}/client/ca.private.pem -new -x509 -days 7300 -out ${certs_dir}/client/cacert.pem -subj "/C=DE/ST=Berlin/O=Reis und Kichererbsen e.V/commonName=aktualizr-repo-client-ca" -batch -config ${certs_dir}/ca.cnf -extensions cacert
+	# certificate for stand-alone device
+	openssl req -out ${certs_dir}/client/standalone_device_cert.csr -subj "/C=DE/ST=Berlin/O=Reis und Kichererbsen e.V/commonName=sota_device" -batch -new -newkey rsa:2048 -nodes -keyout ${certs_dir}/client/standalone_device_key.pem
+	openssl x509 -req -in ${certs_dir}/client/standalone_device_cert.csr -CA ${certs_dir}/client/cacert.pem -CAkey ${certs_dir}/client/ca.private.pem -CAcreateserial -out ${certs_dir}/client/standalone_device_cert.pem
 
+	# CA certificate for server
         openssl genrsa -out ${certs_dir}/server/ca.private.pem 4096
         openssl req -key ${certs_dir}/server/ca.private.pem -new -x509 -days 7300 -out ${certs_dir}/server/cacert.pem -subj "/C=DE/ST=Berlin/O=Reis und Kichererbsen e.V/commonName=aktualizr-repo-server-ca" -batch -config ${certs_dir}/ca.cnf -extensions cacert
+	# server's certificate
         openssl req -out ${certs_dir}/server/cert.csr -subj "/C=DE/ST=Berlin/O=Reis und Kichererbsen e.V/commonName=${host_addr}" -batch -new -newkey rsa:2048 -nodes -keyout ${certs_dir}/server/private.pem
 	openssl x509 -req -in ${certs_dir}/server/cert.csr -CA ${certs_dir}/server/cacert.pem -CAkey ${certs_dir}/server/ca.private.pem -CAcreateserial -out ${certs_dir}/server/cert.pem
 
@@ -42,7 +48,7 @@ gen_ostree () {
 
 gen_credentials () {
 	TEMPDIR=$(mktemp -d)
-	echo "https://${host_addr}:${ip_port}" >${TEMPDIR}/autoprov.url
+	echo -n "https://${host_addr}:${ip_port}" >${TEMPDIR}/autoprov.url
 	openssl pkcs12 -export -out ${TEMPDIR}/autoprov_credentials.p12 -in ${repo_dir}/certs/server/device_bootstrap_cert.pem -inkey ${repo_dir}/certs/server/device_bootstrap_private.pem -CAfile ${repo_dir}/certs/server/cacert.pem -chain -password pass: -passin pass:
 	CURDIR=$(pwd)
 	cd "$TEMPDIR"
@@ -61,6 +67,33 @@ SOTA_CAKEY_PATH = "${repo_dir}/certs/client/ca.private.pem"
 EOF
 }
 
+gen_local_toml () {
+	mkdir -p ${repo_dir}/var_sota
+	echo -n "https://${host_addr}:${ip_port}" >${repo_dir}/var_sota/gateway.url
+
+	cat << EOF >${repo_dir}/sota.toml
+[tls]
+server_url_path = "${repo_dir}/var_sota/gateway.url"
+
+[provision]
+provision_path = "${repo_dir}/credentials.zip"
+primary_ecu_hardware_id = "desktop"
+
+[storage]
+type = "sqlite"
+path = "${repo_dir}/var_sota"
+sqldb_path = "${repo_dir}/var_sota/sql.db"
+
+[pacman]
+type = "none"
+
+[import]
+tls_cacert_path = "${repo_dir}/certs/server/cacert.pem"
+tls_clientcert_path = "${certs_dir}/client/standalone_device_cert.pem"
+tls_pkey_path = "${certs_dir}/client/standalone_device_key.pem"
+EOF
+}
+
 if [ -e ${repo_dir} ]; then
 	echo "File or directory ${1} already exists"
 	exit -1
@@ -72,3 +105,4 @@ gen_repo
 gen_ostree
 gen_credentials
 gen_site_conf
+gen_local_toml
