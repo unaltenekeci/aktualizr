@@ -1016,10 +1016,8 @@ class SQLTargetWHandle : public StorageTargetWHandle {
   sqlite3_blob* blob_;
 };
 
-std::unique_ptr<StorageTargetWHandle> SQLStorage::allocateTargetFile(bool from_director, const std::string& filename,
+std::unique_ptr<StorageTargetWHandle> SQLStorage::allocateTargetFile(const std::string& filename,
                                                                      size_t size) {
-  (void)from_director;
-
   return std::unique_ptr<StorageTargetWHandle>(new SQLTargetWHandle(*this, filename, size));
 }
 

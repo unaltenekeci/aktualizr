@@ -29,7 +29,7 @@ TEST(PackageManagerFactory, Debian_Install_Good) {
   Uptane::Target target_test("test.deb", target_json_test);
   storage->saveInstalledVersion(target_test);
 
-  std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile(false, "good.deb", 2);
+  std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile("good.deb", 2);
   std::stringstream("ab") >> *fhandle;
 
   EXPECT_EQ(pacman->install(target).first, data::UpdateResultCode::kOk);
@@ -50,7 +50,7 @@ TEST(PackageManagerFactory, Debian_Install_Bad) {
   target_json["length"] = 0;
   Uptane::Target target("bad.deb", target_json);
 
-  std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile(false, "bad.deb", 2);
+  std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile("bad.deb", 2);
   std::stringstream("ab") >> *fhandle;
 
   EXPECT_EQ(pacman->install(target).first, data::UpdateResultCode::kInstallFailed);

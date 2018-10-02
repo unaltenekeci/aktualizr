@@ -309,7 +309,7 @@ TEST(storage, store_target) {
 
   // write
   {
-    std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile(false, "testfile", 2);
+    std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile("testfile", 2);
     const uint8_t wb[] = "ab";
     fhandle->wfeed(wb, 1);
     fhandle->wfeed(wb + 1, 1);
@@ -329,7 +329,7 @@ TEST(storage, store_target) {
 
   // write again
   {
-    std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile(false, "testfile", 2);
+    std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile("testfile", 2);
     const uint8_t wb[] = "ab";
     fhandle->wfeed(wb, 1);
     fhandle->wfeed(wb + 1, 1);
@@ -345,7 +345,7 @@ TEST(storage, store_target) {
 
   // write stream
   {
-    std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile(false, "testfile", 2);
+    std::unique_ptr<StorageTargetWHandle> fhandle = storage->allocateTargetFile("testfile", 2);
 
     std::stringstream("ab") >> *fhandle;
   }

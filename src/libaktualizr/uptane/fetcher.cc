@@ -58,7 +58,7 @@ bool Fetcher::fetchVerifyTarget(const Target& target) {
     if (!target.IsOstree()) {
       DownloadMetaStruct ds(target, events_channel);
       std::unique_ptr<StorageTargetWHandle> fhandle =
-          storage->allocateTargetFile(false, target.filename(), static_cast<size_t>(target.length()));
+          storage->allocateTargetFile(target.filename(), static_cast<size_t>(target.length()));
       ds.fhandle = fhandle.get();
       ds.downloaded_length = 0;
 
@@ -85,6 +85,7 @@ bool Fetcher::fetchVerifyTarget(const Target& target) {
 #ifdef BUILD_OSTREE
       KeyManager keys(storage, config.keymanagerConfig());
       keys.loadKeys();
+
       data::InstallOutcome outcome =
           OstreeManager::pull(config.pacman.sysroot, config.pacman.ostree_server, keys, target, events_channel);
       result =

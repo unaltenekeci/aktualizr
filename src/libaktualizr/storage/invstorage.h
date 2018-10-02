@@ -48,6 +48,10 @@ class StorageTargetWHandle {
   virtual size_t wfeed(const uint8_t* buf, size_t size) = 0;
   virtual void wcommit() = 0;
   virtual void wabort() = 0;
+  virtual size_t wtotalsize() = 0;
+  virtual size_t wwrittensize() = 0;
+  virtual uint64_t gettimestamp() = 0;
+  virtual void settimestamp(uint64_t ts) = 0;
 
   friend std::istream& operator>>(std::istream& is, StorageTargetWHandle& handle) {
     std::array<uint8_t, 256> arr{};
@@ -146,9 +150,10 @@ class INvStorage {
   virtual void clearInstallationResult() = 0;
 
   // Incremental file API
-  virtual std::unique_ptr<StorageTargetWHandle> allocateTargetFile(bool from_director, const std::string& filename,
+  virtual std::unique_ptr<StorageTargetWHandle> allocateTargetFile(const std::string& filename,
                                                                    size_t size) = 0;
   virtual std::unique_ptr<StorageTargetRHandle> openTargetFile(const std::string& filename) = 0;
+  virtual std::unique_ptr<StorageTargetWHandle> openTargetFileW(const std::string& filename) = 0;
   virtual void removeTargetFile(const std::string& filename) = 0;
 
   virtual void cleanUp() = 0;
