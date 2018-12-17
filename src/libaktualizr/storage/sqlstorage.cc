@@ -63,41 +63,13 @@ void SQLStorage::cleanMetaVersion(Uptane::RepositoryType repo, Uptane::Role role
   db.commitTransaction();
 }
 
-SQLStorage::SQLStorage(const StorageConfig& config, bool readonly) : INvStorage(config), readonly_(readonly) {
-  boost::filesystem::path db_parent_path = dbPath().parent_path();
-  if (!boost::filesystem::is_directory(db_parent_path)) {
-    Utils::createDirectories(db_parent_path, S_IRWXU);
-  } else {
-    struct stat st {};
-    stat(db_parent_path.c_str(), &st);
-    if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-      throw StorageException("Storage directory has unsafe permissions");
-    }
-    if ((st.st_mode & (S_IRGRP | S_IROTH)) != 0) {
-      // Remove read permissions for group and others
-      chmod(db_parent_path.c_str(), S_IRWXU);
-    }
-  }
-
-  if (!dbMigrate()) {
-    LOG_ERROR << "SQLite database migration failed";
-    // Continue to run anyway, it can't be worse
-  }
-
+SQLStorage::SQLStorage(const StorageConfig& config, bool readonly) : SQLStorageBase(readonly), INvStorage(config){
   try {
     cleanMetaVersion(Uptane::RepositoryType::Director, Uptane::Role::Root());
     cleanMetaVersion(Uptane::RepositoryType::Images, Uptane::Role::Root());
   } catch (...) {
     LOG_ERROR << "SQLite database metadata version migration failed";
   }
-}
-
-SQLite3Guard SQLStorage::dbConnection() const {
-  SQLite3Guard db(dbPath(), readonly_);
-  if (db.get_rc() != SQLITE_OK) {
-    throw SQLException(std::string("Can't open database: ") + db.errmsg());
-  }
-  return db;
 }
 
 void SQLStorage::storePrimaryKeys(const std::string& public_key, const std::string& private_key) {
