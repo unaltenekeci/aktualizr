@@ -15,7 +15,14 @@ int main(int argc, char **argv) {
   // clang-format off
   desc.add_options()
     ("help,h", "print usage")
-    ("command", po::value<std::string>(), "generate|sign|image|addtarget|adddelegation|emptytargets|oldtargets|signtargets")
+    ("command", po::value<std::string>(), "generate: \tgenerate a new repository\n"
+                                          "adddelegation: \tadd a delegated role to the images metadata\n"
+                                          "image: \tadd a target to the images metadata\n"
+                                          "addtarget: \tprepare director targets metadata for a given device\n"
+                                          "signtargets: \tsign the staged director targets metadata\n"
+                                          "emptytargets: \tclear the staged director targets metadata\n"
+                                          "oldtargets: \tfill the staged director targets metadata with what is currently signed\n"
+                                          "sign: \tsign arbitrary metadata with repo keys")
     ("path", po::value<boost::filesystem::path>(), "path to the repository")
     ("filename", po::value<boost::filesystem::path>(), "path to the image")
     ("hwid", po::value<std::string>(), "target hardware identifier")
@@ -29,8 +36,8 @@ int main(int argc, char **argv) {
     ("targetsha256", po::value<std::string>(), "target's SHA256 hash (for adding metadata without an actual file)")
     ("targetsha512", po::value<std::string>(), "target's SHA512 hash (for adding metadata without an actual file)")
     ("targetlength", po::value<uint64_t>(), "target's length (for adding metadata without an actual file)")
-    ("dname", po::value<std::string>(), "delegation name")
-    ("dpattern", po::value<std::string>(), "delegation pattern");
+    ("dname", po::value<std::string>(), "delegated role name")
+    ("dpattern", po::value<std::string>(), "delegated file path pattern");
 
   // clang-format on
 
@@ -71,7 +78,8 @@ int main(int argc, char **argv) {
         repo.generateRepo(key_type);
       } else if (command == "image") {
         if (vm.count("targetname") == 0 && vm.count("filename") == 0) {
-          throw std::runtime_error("--targetname or --filename is required for this command");
+          std::cerr << "image command requires --targetname or --filename\n";
+          exit(EXIT_FAILURE);
         }
         auto targetname = (vm.count("targetname") > 0) ? vm["targetname"].as<std::string>()
                                                        : vm["filename"].as<boost::filesystem::path>();
@@ -80,14 +88,17 @@ int main(int argc, char **argv) {
         if (vm.count("dname") != 0) {
           delegation = Delegation(vm["path"].as<boost::filesystem::path>(), vm["dname"].as<std::string>());
           if (!delegation.isMatched(targetname)) {
-            throw std::runtime_error("Image path doesn't match delegation!");
+            std::cerr << "Image path doesn't match delegation!\n";
+            exit(EXIT_FAILURE);
           }
         }
         if (vm.count("filename") > 0) {
           repo.addImage(vm["filename"].as<boost::filesystem::path>(), targetname, delegation);
         } else {
           if ((vm.count("targetsha256") == 0 && vm.count("targetsha512") == 0) || vm.count("targetlength") == 0) {
-            throw std::runtime_error("You shoud provide --targetsha256 or --targetsha512, and --targetlength");
+            std::cerr << "image command requires --targetsha256 or --targetsha512, and --targetlength when --filename "
+                         "is not supplied.\n";
+            exit(EXIT_FAILURE);
           }
           std::unique_ptr<Uptane::Hash> hash;
           if (vm.count("targetsha256") > 0) {
@@ -98,11 +109,15 @@ int main(int argc, char **argv) {
           repo.addCustomImage(targetname.string(), *hash, vm["targetlength"].as<uint64_t>(), delegation);
         }
       } else if (command == "addtarget") {
+        if (vm.count("filename") == 0 || vm.count("hwid") == 0 || vm.count("serial") == 0) {
+          std::cerr << "addtarget command requires --filename, --hwid, and --serial\n";
+          exit(EXIT_FAILURE);
+        }
         repo.addTarget(vm["filename"].as<boost::filesystem::path>().string(), vm["hwid"].as<std::string>(),
                        vm["serial"].as<std::string>());
       } else if (command == "adddelegation") {
         if (vm.count("dname") == 0 || vm.count("dpattern") == 0) {
-          std::cerr << "--dname and/or --dpattern is missing\n";
+          std::cerr << "adddelegation command requires --dname and --dpattern\n";
           exit(EXIT_FAILURE);
         }
         repo.addDelegation(Uptane::Role(vm["dname"].as<std::string>(), true), vm["dpattern"].as<std::string>());
@@ -114,7 +129,7 @@ int main(int argc, char **argv) {
         repo.oldTargets();
       } else if (command == "sign") {
         if (vm.count("repotype") == 0 || vm.count("keyname") == 0) {
-          std::cerr << "--repotype or --keyname is missing\n";
+          std::cerr << "sign command requires --repotype and --keyname\n";
           exit(EXIT_FAILURE);
         }
         std::cin >> std::noskipws;
