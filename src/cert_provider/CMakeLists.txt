@@ -11,8 +11,18 @@ add_dependencies(build_tests aktualizr-cert-provider)
 
 install(TARGETS aktualizr-cert-provider RUNTIME DESTINATION bin)
 
-add_test(NAME certprovider-ca COMMAND ${PROJECT_SOURCE_DIR}/tests/run_certprovider_test.sh
-        ${PROJECT_BINARY_DIR}/src/cert_provider/aktualizr-cert-provider ${PROJECT_SOURCE_DIR}/tests/test_data/credentials.zip
-        ${PROJECT_SOURCE_DIR}/tests/test_data/CAcert.pem ${PROJECT_SOURCE_DIR}/tests/test_data/CApkey.pem)
+if(SOTA_PACKED_CREDENTIALS)
+  add_aktualizr_test(NAME  aktualizr_cert_provider SOURCES cert_provider_test.cc PROJECT_WORKING_DIRECTORY
+    ARGS $<TARGET_FILE:aktualizr-cert-provider> ${SOTA_PACKED_CREDENTIALS})
+
+else(SOTA_PACKED_CREDENTIALS)
+  add_aktualizr_test(NAME  aktualizr_cert_provider SOURCES cert_provider_test.cc PROJECT_WORKING_DIRECTORY
+    ARGS $<TARGET_FILE:aktualizr-cert-provider>)
+
+endif(SOTA_PACKED_CREDENTIALS)
+
+aktualizr_source_file_checks(${AKTUALIZR_CERT_PROVIDER_SRC}
+                             ${AKTUALIZR_CERT_HEADERS}
+                             ${TEST_SOURCES})
 
 # vim: set tabstop=4 shiftwidth=4 expandtab:

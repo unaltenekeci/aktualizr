@@ -362,36 +362,35 @@ These tools all link with libaktualizr, although they do not necessary use the A
 
 `aktualizr-cert-provider` assists with generating credentials and uploading them to a device for implicit provisioning.
 
-- [ ] Use file paths from config if provided
-- [ ] Use autoprovisioning credentials if fleet CA and private key are not provided
+- [x] Use file paths from config if provided (cert_provider_test.cc)
+- [x] Use autoprovisioning credentials if fleet CA and private key are not provided (cert_provider_test.cc)
   - [x] Generate a random device ID (OTA-986, utils_test.cc, uptane_init_test.cc)
-  - [x] Automatically provision (see above)
-- [x] Use fleet credentials if provided (run_certprovider_test.sh)
-  - [ ] Abort if fleet CA is provided without fleet private key
-  - [ ] Abort if fleet private key is provided without fleet CA
-  - [ ] Specify RSA bit length
-  - [ ] Specify device certificate expiration date
-  - [ ] Specify device certificate country code
-  - [ ] Specify device certificate state abbreviation
-  - [ ] Specify device certificate organization name
-  - [ ] Specify device certificate common name
-    - [ ] Generate a random device ID if not specified
-  - [ ] Read fleet CA certificate
-  - [ ] Read fleet private key
-  - [x] Create device certificate (run_certprovider_test.sh)
-  - [ ] Create device keys
-  - [ ] Set public key for the device certificate
-  - [x] Sign device certificate with fleet private key (run_certprovider_test.sh)
-  - [ ] Serialize device private key to a string
-  - [ ] Serialize device certificate to a string
+  - [x] Automatically provision
+- [x] Use fleet credentials if provided (cert_provider_test.cc)
+  - [x] Abort if fleet CA is provided without fleet private key
+  - [x] Abort if fleet private key is provided without fleet CA
+  - [x] Specify RSA bit length
+  - [x] Specify device certificate expiration date
+  - [x] Specify device certificate country code
+  - [x] Specify device certificate state abbreviation
+  - [x] Specify device certificate organization name
+  - [x] Specify device certificate common name
+  - [x] Read fleet CA certificate
+  - [x] Read fleet private key
+  - [x] Create device certificate
+  - [x] Create device keys
+  - [x] Set public key for the device certificate
+  - [x] Sign device certificate with fleet private key
+  - [x] Serialize device private key to a string
+  - [x] Serialize device certificate to a string
 - [ ] Read server root CA from credentials archive
   - [ ] Read server root CA from server_ca.pem if present (to support community edition use case)
-  - [ ] Read server root CA from p12 (default case)
-- [ ] Write credentials to a local directory if requested
-  - [ ] Provide device private key
-  - [x] Provide device certificate (run_certprovider_test.sh)
-  - [ ] Provide root CA if requested
-  - [ ] Provide server URL if requested
+  - [x] Read server root CA from p12 (cert_provider_test.cc)
+- [x] Write credentials to a local directory if requested (cert_provider_test.cc)
+  - [x] Provide device private key
+  - [x] Provide device certificate
+  - [x] Provide root CA if requested
+  - [x] Provide server URL if requested
 - [ ] Copy credentials to a device with ssh
   - [ ] Create parent directories
   - [ ] Provide device private key
